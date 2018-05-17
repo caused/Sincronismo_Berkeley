@@ -7,7 +7,6 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.List;
-
 import br.com.mackenzie.handler.ArgsHandler;
 import br.com.mackenzie.handler.IOHandler;
 import br.com.mackenzie.handler.TimeHandler;
@@ -20,8 +19,10 @@ public class Master implements Executor {
 		ArgsHandler argsHandler = new ArgsHandler();
 		TimeHandler timeHandler = new TimeHandler();
 		
+		Long tolerance = Long.parseLong(argsHandler.getArgumentValue(args[2]));
 		String slavesFile = argsHandler.getArgumentValue(args[3]);
 		String logFile = argsHandler.getArgumentValue(args[4]);
+		
 
 		List<IpAddress> addressList = ioHandler.readFile(slavesFile);
 		
@@ -44,8 +45,8 @@ public class Master implements Executor {
 		while(true){
 			id++;
 			//array para juntar os atrasos dos slaves
-			Long[] atrasos = new Long[addressList.size()];
-			
+			Long[] slavesTime = new Long[addressList.size()];
+			Long masterTime = timeHandler.getTime();
 			for(int i=0; i < addressList.size(); i++){
 				//Obtem o nome do slave
 				
@@ -55,7 +56,7 @@ public class Master implements Executor {
 					
 					//Obtendo host do slave pelo endereco IP
 					InetAddress address = InetAddress.getByName(addressList.get(i).getIp());
-					comando = "obtemHora";
+					comando = "obtemHora:"+id;
 					
 					sendData = comando.getBytes();
 					
@@ -75,12 +76,12 @@ public class Master implements Executor {
 					//Escrever operações realizadas no log
 					ioHandler.writeInFile(logFile, "Foi recebido do slave "+addressList.get(i).toString()+ " a mensagem: "+resposta);
 					
-					atrasos[i] = Long.parseLong(resposta.trim());
+					slavesTime[i] = Long.parseLong(resposta.trim());
 					ioHandler.writeInFile(logFile, "Diferença entre master e slave ( "+ addressList.get(i).toString()+" ) de " + String.valueOf(timeHandler.getTime() - Long.valueOf(resposta.trim())) + " milissegundos");
 					
 				} catch (IOException e) {
 					if(e instanceof SocketTimeoutException ){
-						atrasos[i] = 0L;
+						slavesTime[i] = null;
 					}else{
 						System.out.println("Erro ao escrever no arquivo");
 						System.exit(0);
@@ -89,7 +90,9 @@ public class Master implements Executor {
 				}
 				
 			}
-			
+			Long[] differencesArray = timeHandler.generateDifferences(masterTime, slavesTime);
+			Long timeAverage = timeHandler.getTimeAverage(differencesArray, tolerance);
+			Long[] fixedTimesIntervals = timeHandler.getFixedTimesIntervals(timeAverage, differencesArray);
 			
 			clientSocket.close();
 			
