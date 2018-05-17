@@ -17,7 +17,7 @@ public class Slave implements Executor {
 		ArgsHandler argsHandler = new ArgsHandler();
 		TimeHandler timeHandler = new TimeHandler();
 
-		String logFile = argsHandler.getArgumentValue(args[2]);
+		String logFile = argsHandler.getArgumentValue(args[3]);
 
 		// Abrir slave para receber requisiçoes
 		int port = Integer.parseInt(argsHandler.getArgumentValue(args[1]).split(":")[1]);
@@ -36,7 +36,7 @@ public class Slave implements Executor {
 		Long tempo = 0L;
 
 		Log.info(logFile, "+------ Log Slave -------+");
-
+		tempo = timeHandler.getTime(argsHandler.getArgumentValue(args[2]));
 		while(true){
 			//Preparar recebimento da mensagem do master
 			DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
@@ -53,7 +53,6 @@ public class Slave implements Executor {
 				if(comando.contains("obterHora")){
 					Log.info(logFile, "**************ID: "+comando.replace("obterHora:", "")+"**********");
 					Log.info(logFile, "Master pedindo horário");
-					tempo = timeHandler.getTime(argsHandler.getArgumentValue(args[1]));
 					comando = Long.toString(tempo);
 					sendData = comando.getBytes();
 					
@@ -71,7 +70,8 @@ public class Slave implements Executor {
 					Log.info(logFile, "Hora atual: " + timeHandler.getFormattedTime(tempo) + "\n");
 
 					//Exibe novo horário do mestre
-					Log.info(logFile, "Hora após atualização: " + timeHandler.getFormattedTime(tempo+correcao) + "\n");
+					tempo +=correcao;
+					Log.info(logFile, "Hora após atualização: " + timeHandler.getFormattedTime(tempo) + "\n");
 
 					
 				}

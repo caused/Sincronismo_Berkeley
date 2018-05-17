@@ -22,9 +22,9 @@ public class Master implements Executor {
 		ArgsHandler argsHandler = new ArgsHandler();
 		TimeHandler timeHandler = new TimeHandler();
 
-		Long tolerance = Long.parseLong(argsHandler.getArgumentValue(args[2]));
-		String slavesFile = argsHandler.getArgumentValue(args[3]);
-		String logFile = argsHandler.getArgumentValue(args[4]);
+		Long tolerance = Long.parseLong(argsHandler.getArgumentValue(args[3]));
+		String slavesFile = argsHandler.getArgumentValue(args[4]);
+		String logFile = argsHandler.getArgumentValue(args[5]);
 
 
 		List<IpAddress> addressList = ioHandler.readFile(slavesFile);
@@ -46,7 +46,7 @@ public class Master implements Executor {
 		String comando = "";
 		long id = 0;
 		//Loop para ler os slaves
-		Long masterTime = timeHandler.getTime(argsHandler.getArgumentValue(args[1]));
+		Long masterTime = timeHandler.getTime(argsHandler.getArgumentValue(args[2]));
 		while(true){
 			id++;
 			//array para juntar os atrasos dos slaves
