@@ -10,9 +10,9 @@ import br.com.mackenzie.model.Slave;
 public class ArgsHandler {
 
 	public Executor buildExecutor(String option){
-		if("-m".equals(getArgumentValue(option))){
+		if("-m".equals(option)){
 			return new Master();
-		}else if("-s".equals(getArgumentValue(option))){
+		}else if("-s".equals(option)){
 			return new Slave();
 		}else{
 			throw new IllegalArgumentException("É necessário informar os parâmetros -m ou -s");

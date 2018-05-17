@@ -1,0 +1,2 @@
+[INFO] Enviando para o slave localhost:9995 correção de -32 milisegundos%n
+
