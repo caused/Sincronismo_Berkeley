@@ -6,15 +6,29 @@ import java.util.Date;
 
 public class TimeHandler {
 
-	public Long getTime(String time){
+	private Long localDifference;
+
+	public TimeHandler(String initializingTime){
+		localDifference = getTime(initializingTime) - System.currentTimeMillis();
+	}
+
+	public static Long getTime(String time){
 		String[] horarioDecomposto = time.split(":");
 
 		Calendar calendar = Calendar.getInstance();
 		calendar.set(Calendar.HOUR_OF_DAY, Integer.parseInt(horarioDecomposto[0]));
 		calendar.set(Calendar.MINUTE,Integer.parseInt(horarioDecomposto[1]));
 		calendar.set(Calendar.SECOND,Integer.parseInt(horarioDecomposto[2]));
-		
+
 		return calendar.getTimeInMillis();
+	}
+
+	public void updateLocalDifferences(Long delta){
+		this.localDifference = delta - this.localDifference;
+	}
+
+	public Long getCurrentTime(){
+		return System.currentTimeMillis() - localDifference;
 	}
 
 	public String getFormattedTime(Long milliseconds){
@@ -39,16 +53,15 @@ public class TimeHandler {
 		return acumulador/(contador+1);
 	}
 
-	public Long[] generateDifferences(Long masterTime, Long[] slavesTime){
+	public Long generateDifferences(Long masterTime, Long slavesTime){
 
-		Long[] differencesArray = new Long[slavesTime.length];
 
-		for(int i =0; i < slavesTime.length; i++){
-			if(slavesTime[i] != null){
-				differencesArray[i] = slavesTime[i] - masterTime;
-			}
+		Long difference = 0L;
+
+		if(slavesTime != null){
+			difference = slavesTime - masterTime;
 		}
-		return differencesArray;
+		return difference;
 	}
 
 	public Long[] getFixedTimesIntervals(Long average, Long[] differencesArray){

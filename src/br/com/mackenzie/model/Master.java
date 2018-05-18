@@ -1,12 +1,10 @@
 package br.com.mackenzie.model;
 
 import java.io.IOException;
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.util.List;
+import br.com.mackenzie.handler.SocketHandler;
+
 import br.com.mackenzie.handler.ArgsHandler;
 import br.com.mackenzie.handler.IOHandler;
 import br.com.mackenzie.handler.TimeHandler;
@@ -20,7 +18,7 @@ public class Master implements Executor {
 	public void execute(String [] args) {
 		IOHandler ioHandler = new IOHandler();
 		ArgsHandler argsHandler = new ArgsHandler();
-		TimeHandler timeHandler = new TimeHandler();
+		TimeHandler timeHandler = new TimeHandler(argsHandler.getArgumentValue(args[2]));
 
 		Long tolerance = Long.parseLong(argsHandler.getArgumentValue(args[3]));
 		String slavesFile = argsHandler.getArgumentValue(args[4]);
@@ -29,70 +27,47 @@ public class Master implements Executor {
 
 		List<IpAddress> addressList = ioHandler.readFile(slavesFile);
 
-		DatagramSocket clientSocket = null;
-		try{
-			clientSocket = new DatagramSocket();
-		}catch(SocketException e){
-			Log.error(logFile,"Erro ao utilizar socket");
-			System.exit(1);
-		}
-		DatagramPacket sendPacket;
-		byte[] sendData = new byte[1024];
-		byte[] receiveData = new byte[1024];
-		InetAddress address = null;
-
+		SocketHandler socket = new SocketHandler(logFile);
 
 		//Instrução a ser enviada para os slaves
 		String comando = "";
 		long id = 0;
 		//Loop para ler os slaves
-		Long masterTime = timeHandler.getTime(argsHandler.getArgumentValue(args[2]));
 		while(true){
 			id++;
+			
 			//array para juntar os atrasos dos slaves
-			Long[] slavesTime = new Long[addressList.size()];
+			Long[] differencesArray = new Long[addressList.size()];
 			
 			Log.info(logFile, "**********Iniciando log master********");
+			Log.info(logFile, "**************LOOP: "+id+"**********");
 			for(int i=0; i < addressList.size(); i++){
 				//Obtem o nome do slave
-				Log.info(logFile, "**************Slave: "+i+"**********");
+				
 				try {
-					clientSocket.setSoTimeout(5000);
 					
-
 					//Obtendo host do slave pelo endereco IP
 					Log.info(logFile, "Obtendo endereco de IP do slave: "+addressList.get(i).getIp());
-					address = InetAddress.getByName(addressList.get(i).getIp());
+					
 					comando = "obterHora:"+id;
 
-					sendData = comando.getBytes();
+					//Enviando chamada para obter hora dos slaves
+					socket.sendPacket(comando, addressList.get(i).getIp(), addressList.get(i).getPort(), logFile);
 
-					//Instanciar pacote que será enviado ao slave
-					sendPacket = new DatagramPacket(sendData, sendData.length, address, addressList.get(i).getPort());
-
-					//Enviar requisição
-					Log.info(logFile, "Enviando requisição...");
-					clientSocket.send(sendPacket);
-
-					//Instanciar pacote que receberá resposta dos slaves
-					DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
-
-					//Receber hora do slave
-					Log.info(logFile, "Recebendo resposta");
-					clientSocket.receive(receivePacket);
-					String resposta = new String(receivePacket.getData());
+					//Receber retorno dos slaves
+					String resposta = socket.receivePacket();
 
 					//Escrever operações realizadas no log
 					Log.info(logFile, "Foi recebido do slave "+addressList.get(i).toString()+ " a mensagem: "+resposta.trim());
 
-					slavesTime[i] = Long.parseLong(resposta.trim());
+					differencesArray[i] = timeHandler.generateDifferences(timeHandler.getCurrentTime(), Long.parseLong(resposta.trim()));
 
-					Log.info(logFile, "Diferença entre master e slave ( "+ addressList.get(i).toString()+" ) de " + String.valueOf(masterTime - Long.valueOf(resposta.trim())) + " milissegundos");
+					Log.info(logFile, "Diferença entre master e slave ( "+ addressList.get(i).toString()+" ) de " + String.valueOf(timeHandler.getCurrentTime() - Long.valueOf(resposta.trim())) + " milissegundos");
 
 				} catch (IOException e) {
 					if(e instanceof SocketTimeoutException ){
 						Log.info(logFile, "Tempo de espera máximo excedido");
-						slavesTime[i] = null;
+						differencesArray[i] = null;
 					}else{
 						Log.error(logFile,"Erro ao escrever no arquivo: "+e);
 						System.exit(0);
@@ -101,15 +76,15 @@ public class Master implements Executor {
 				}
 
 			}
-			Long[] differencesArray = timeHandler.generateDifferences(masterTime, slavesTime);
 			Long timeAverage = timeHandler.getTimeAverage(differencesArray, tolerance);
 			Long[] fixedTimesIntervals = timeHandler.getFixedTimesIntervals(timeAverage, differencesArray);
 
 			//Exibir horário atual
-			Log.info(logFile, "Hora atual: " + timeHandler.getFormattedTime(masterTime) + "%n\n");
+			Log.info(logFile, "Hora atual: " + timeHandler.getFormattedTime(timeHandler.getCurrentTime()));
 
 			//Exibe novo horário do mestre
-			Log.info(logFile, "Hora após atualização: " + timeHandler.getFormattedTime(masterTime+timeAverage) + "%n\n");
+			timeHandler.updateLocalDifferences(timeAverage);
+			Log.info(logFile, "Hora após atualização: " + timeHandler.getFormattedTime(timeHandler.getCurrentTime()));
 
 
 
@@ -118,28 +93,23 @@ public class Master implements Executor {
 				if(fixedTimesIntervals[i] == null){
 					fixedTimesIntervals[i] = 0L;
 				}
-				Log.info(logFile, "Enviando para o slave " + addressList.get(i).toString() + " correção de " + fixedTimesIntervals[i] + " milisegundos%n\n");
+				Log.info(logFile, "Enviando para o slave " + addressList.get(i).toString() + " correção de " + fixedTimesIntervals[i] + " milisegundos");
 				comando = "corrigeHora:" + fixedTimesIntervals[i];
-				sendData = comando.getBytes();
 				try {
-					address = InetAddress.getByName(addressList.get(i).getIp());
-
-					sendPacket = new DatagramPacket(sendData, sendData.length, address, addressList.get(i).getPort());
-					clientSocket.send(sendPacket);
+					socket.sendPacket(comando, addressList.get(i).getIp(), addressList.get(i).getPort(), logFile);
 				}catch (IOException e) {
 					Log.error(logFile, "Erro ao enviar pacote para slaves: "+e);
-					clientSocket.close();
 					System.exit(0);
 				}
 			}
-
-
 			try{
 				Thread.sleep(5000);
 			}catch(Exception e){
 				System.out.println("Erro ao aguardar processamento");
 				System.exit(0);
 			}
+			
+			
 		}
 
 

@@ -15,11 +15,10 @@ public class Slave implements Executor {
 	@Override
 	public void execute(String [] args) {
 		ArgsHandler argsHandler = new ArgsHandler();
-		TimeHandler timeHandler = new TimeHandler();
+		TimeHandler timeHandler = new TimeHandler(argsHandler.getArgumentValue(args[2]));
 
 		String logFile = argsHandler.getArgumentValue(args[3]);
 
-		// Abrir slave para receber requisiçoes
 		int port = Integer.parseInt(argsHandler.getArgumentValue(args[1]).split(":")[1]);
 		DatagramSocket serverSocket = null;
 		InetAddress address = null;
@@ -33,11 +32,10 @@ public class Slave implements Executor {
 		byte[] receiveData = new byte[1024];
 		byte[] sendData = new byte[1024];
 		String comando;
-		Long tempo = 0L;
 
 		Log.info(logFile, "+------ Log Slave -------+");
-		tempo = timeHandler.getTime(argsHandler.getArgumentValue(args[2]));
 		while(true){
+
 			//Preparar recebimento da mensagem do master
 			DatagramPacket receivePacket = new DatagramPacket(receiveData, receiveData.length);
 			try{
@@ -53,7 +51,7 @@ public class Slave implements Executor {
 				if(comando.contains("obterHora")){
 					Log.info(logFile, "**************ID: "+comando.replace("obterHora:", "")+"**********");
 					Log.info(logFile, "Master pedindo horário");
-					comando = Long.toString(tempo);
+					comando = Long.toString(timeHandler.getCurrentTime());
 					sendData = comando.getBytes();
 					
 					//Envia resposta ao master
@@ -67,11 +65,11 @@ public class Slave implements Executor {
 					Log.info(logFile, "Correção recebida do master: "+correcao);
 					
 					//Exibir horário atual
-					Log.info(logFile, "Hora atual: " + timeHandler.getFormattedTime(tempo) + "\n");
+					Log.info(logFile, "Hora atual: " + timeHandler.getFormattedTime(timeHandler.getCurrentTime()) + "");
 
-					//Exibe novo horário do mestre
-					tempo +=correcao;
-					Log.info(logFile, "Hora após atualização: " + timeHandler.getFormattedTime(tempo) + "\n");
+					//Exibe novo horário do slave
+					timeHandler.updateLocalDifferences(correcao);
+					Log.info(logFile, "Hora após atualização: " + timeHandler.getFormattedTime(timeHandler.getCurrentTime()) + "\n");
 
 					
 				}
@@ -80,6 +78,7 @@ public class Slave implements Executor {
 				serverSocket.close();
 				System.exit(0);
 			}
+			
 		}
 
 	}

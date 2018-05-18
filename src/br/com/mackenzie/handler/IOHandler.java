@@ -36,8 +36,8 @@ public class IOHandler {
 	
 	public void writeInFile(String fileName, String content){
 		try {
-			BufferedWriter writer = new BufferedWriter(new FileWriter(fileName));
-			writer.write(content);
+			BufferedWriter writer = new BufferedWriter(new FileWriter(fileName, true));
+			writer.append(content);
 			writer.flush();
 			writer.newLine();
 			writer.close();

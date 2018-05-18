@@ -1,0 +1,5 @@
+O projeto consiste em inicilizar para solução como master ou slave, e a master se conectar aos slaves especificados via txt e sincronizar o relógio entre eles com base no Algoritmo de Berkeley. 
+
+A funcionalidade de "time" é sempre inicializada como default, contrariando a especificação do projeto, mas sendo o único ponto. 
+
+Como melhoria, temos a verificçaão do acúmulo acumulado, para verificar se realmente está trabalhando da maneira correta, e melhores validações de falha de algum dos slaves, e a obtenção do horário através do cmd
