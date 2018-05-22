@@ -42,12 +42,11 @@ public class Master implements Executor {
 			Log.info(logFile, "**********Iniciando log master********");
 			Log.info(logFile, "**************LOOP: "+id+"**********");
 			for(int i=0; i < addressList.size(); i++){
-				//Obtem o nome do slave
 				
 				try {
-					
+					Log.info(logFile, "************************");
 					//Obtendo host do slave pelo endereco IP
-					Log.info(logFile, "Obtendo endereco de IP do slave: "+addressList.get(i).getIp());
+					Log.info(logFile, "Obtendo endereco de IP do slave: "+addressList.get(i).toString());
 					
 					comando = "obterHora:"+id;
 
@@ -62,8 +61,8 @@ public class Master implements Executor {
 
 					differencesArray[i] = timeHandler.generateDifferences(timeHandler.getCurrentTime(), Long.parseLong(resposta.trim()));
 
-					Log.info(logFile, "Diferença entre master e slave ( "+ addressList.get(i).toString()+" ) de " + String.valueOf(timeHandler.getCurrentTime() - Long.valueOf(resposta.trim())) + " milissegundos");
-
+					Log.info(logFile, "Diferença entre master e slave ( "+ addressList.get(i).toString()+" ) de " + differencesArray[i] + " milissegundos");
+					Log.info(logFile, "************************");
 				} catch (IOException e) {
 					if(e instanceof SocketTimeoutException ){
 						Log.info(logFile, "Tempo de espera máximo excedido");
@@ -81,7 +80,6 @@ public class Master implements Executor {
 
 			//Exibir horário atual
 			Log.info(logFile, "Hora atual: " + timeHandler.getFormattedTime(timeHandler.getCurrentTime()));
-
 			//Exibe novo horário do mestre
 			timeHandler.updateLocalDifferences(timeAverage);
 			Log.info(logFile, "Hora após atualização: " + timeHandler.getFormattedTime(timeHandler.getCurrentTime()));

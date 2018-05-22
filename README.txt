@@ -1,12 +1,12 @@
 README
 
-java -jar sincronismo.jar -s ip=localhost:9997 time=12:10:30 logFile=C:\Users\galves\Sincronismo\dist\logA.txt
+java -jar sincronismo.jar -s ip=localhost:9997 time=12:04:00 logFile=C:\Users\galves\Sincronismo\dist\logA.txt
 
-java -jar sincronismo.jar -s ip=ip=localhost:9996 time=15:29:10 logFile=C:\Users\galves\Sincronismo\dist\logB.txt
+java -jar sincronismo.jar -s ip=ip=localhost:9996 time=12:08:00 logFile=C:\Users\galves\Sincronismo\dist\logB.txt
 
-java -jar sincronismo.jar -s ip=localhost:9995 time=02:10:00 logFile=C:\Users\galves\Sincronismo\dist\logC.txt
+java -jar sincronismo.jar -s ip=localhost:9995 time=11:55:00 logFile=C:\Users\galves\Sincronismo\dist\logC.txt
 
-java -jar sincronismo.jar -m ip=localhost:9998 time=10:10:10 d=250000000 slavesFile=C:\Users\galves\Sincronismo\dist\slaves.txt logFile=C:\Users\galves\Sincronismo\dist\log.txt
+java -jar sincronismo.jar -m ip=localhost:9998 time=12:01:00 d=250000000000000000 slavesFile=C:\Users\galves\Sincronismo\dist\slaves.txt logFile=C:\Users\galves\Sincronismo\dist\log.txt
 
 
 Arquivos submetidos:

@@ -4,9 +4,14 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
+
 public class TimeHandler {
 
 	private Long localDifference;
+
+	public Long getLocalDifference() {
+		return localDifference;
+	}
 
 	public TimeHandler(String initializingTime){
 		localDifference = getTime(initializingTime) - System.currentTimeMillis();
@@ -22,13 +27,14 @@ public class TimeHandler {
 
 		return calendar.getTimeInMillis();
 	}
-
+	
+	//Aqui a gente está errando
 	public void updateLocalDifferences(Long delta){
-		this.localDifference = delta - this.localDifference;
+		this.localDifference = delta + this.localDifference;
 	}
 
 	public Long getCurrentTime(){
-		return System.currentTimeMillis() - localDifference;
+		return System.currentTimeMillis() + localDifference;
 	}
 
 	public String getFormattedTime(Long milliseconds){
@@ -47,7 +53,6 @@ public class TimeHandler {
 					contador++;
 				}
 			}
-
 		}
 
 		return acumulador/(contador+1);
@@ -65,7 +70,6 @@ public class TimeHandler {
 	}
 
 	public Long[] getFixedTimesIntervals(Long average, Long[] differencesArray){
-
 		Long[] fixedIntervals = new Long[differencesArray.length];
 
 		for(int i=0; i < differencesArray.length; i++){
